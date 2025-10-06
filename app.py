@@ -21,7 +21,7 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=True)
-
+    cart = db.relationship('CartItem', backref='user', lazy=True)
 
 # modelagem
 # produto (id, name, price, description)
@@ -31,7 +31,12 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.Text, nullable=True)
 
-# Autenticacao
+class CartItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable =False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable =False)
+
+# Autenticacao login/logout
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -47,13 +52,14 @@ def login():
     
     return jsonify({"message": "Unauthorized. Invalid credentials"}), 401            
 
-
 @app.route('/logout', methods = ["POST"])
 @login_required
 def logout():
     logout_user()
     return jsonify({"message": "Logout in successfully"})
 
+
+# adição de novos produtos
 @app.route('/api/products/add', methods=["POST"])
 @login_required
 def add_product():
